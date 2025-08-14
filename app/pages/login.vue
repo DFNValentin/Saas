@@ -1,5 +1,5 @@
 <template>
   <div>
-    <NuxtPage />
+    Hello to the app in the login
   </div>
 </template>
