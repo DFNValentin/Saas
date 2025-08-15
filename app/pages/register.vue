@@ -71,7 +71,6 @@ const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const error = ref(null)
-
 const register = async () => {
   error.value = null
   const { data, error: signUpError } = await supabase.auth.signUp({
@@ -79,6 +78,9 @@ const register = async () => {
     email: email.value,
     password: password.value,
     passwordConfirm: passwordConfirm.value,
+    options: {
+    data: { username: name.value } // aici pui numele
+  }
   })
 
   if (signUpError) {
@@ -86,6 +88,11 @@ const register = async () => {
     return
   }
 
+
+  if (updateError) {
+    errorMsg.value = updateError.message
+    return
+  }
   console.log('User registered:', data)
 }
 </script>

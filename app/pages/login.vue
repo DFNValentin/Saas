@@ -1,29 +1,75 @@
 <template>
-  <form @submit.prevent="login">
-    <input v-model="email" type="email" placeholder="Email" required />
-    <input v-model="password" type="password" placeholder="Password" required />
-    <button type="submit">Login</button>
-  </form>
+  <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-300 relative overflow-hidden">
+    
+    <!-- Background SVG -->
+    <div class="absolute inset-0">
+      <svg class="w-full h-full" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+  <path fill="#4f46e5" fill-opacity="0.2">
+    <animate attributeName="d" dur="10s" repeatCount="indefinite"
+      values="
+        M0,128L80,160C160,192,320,256,480,261.3C640,267,800,213,960,181.3C1120,149,1280,139,1360,133.3L1440,128L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z;
+        M0,160L80,180C160,200,320,220,480,200C640,180,800,160,960,181.3C1120,203,1280,245,1360,266.7L1440,288L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z;
+        M0,128L80,160C160,192,320,256,480,261.3C640,267,800,213,960,181.3C1120,149,1280,139,1360,133.3L1440,128L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z
+      "
+    />
+  </path>
+</svg>
+
+    </div>
+
+    <!-- Formular -->
+    <form @submit.prevent="login" 
+      class="relative bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8 w-full max-w-md space-y-6 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80"
+    >
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">Register</h2>
+
+      <div>
+        <label class="block text-gray-700 dark:text-gray-200 mb-2">Email</label>
+        <input v-model="email" type="email" placeholder="you@example.com" required
+          class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-gray-700 dark:text-gray-200 mb-2">Password</label>
+        <input v-model="password" type="password" placeholder="••••••••" required
+          class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
+      <button type="submit"
+        class="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+      >
+        login
+      </button>
+
+      <p v-if="error" class="text-red-500 text-center mt-2">{{ error }}</p>
+    </form>
+  </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { supabase } from '~/utils/supabase'
-
+import { useRouter } from 'vue-router'
+const router = useRouter()
 const email = ref('')
 const password = ref('')
 const error = ref(null)
+
+
 
 const login = async () => {
   error.value = null
   const { data, error: loginError } = await supabase.auth.signInWithPassword({
     email: email.value,
     password: password.value
-  })
-
+  }) 
   if (loginError) {
     error.value = loginError.message
     return
+  }else {
+    router.push('/chat') 
   }
 
   console.log('User Logged:', data.user)
