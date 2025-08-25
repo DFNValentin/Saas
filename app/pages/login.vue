@@ -58,7 +58,6 @@ const password = ref('')
 const error = ref(null)
 
 
-
 const login = async () => {
   error.value = null
   const { data, error: loginError } = await supabase.auth.signInWithPassword({
@@ -67,11 +66,11 @@ const login = async () => {
   }) 
   if (loginError) {
     error.value = loginError.message
+
     return
   }else {
-    router.push('/chat') 
+    router.push('/me') 
   }
-
   console.log('User Logged:', data.user)
 }
 </script>

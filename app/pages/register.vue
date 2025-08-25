@@ -79,7 +79,7 @@ const register = async () => {
     password: password.value,
     passwordConfirm: passwordConfirm.value,
     options: {
-    data: { username: name.value } // aici pui numele
+    data: { display_name: name.value } // aici pui numele
   }
   })
 
