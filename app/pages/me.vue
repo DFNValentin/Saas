@@ -19,10 +19,14 @@ onMounted(async () => {
 })
 </script>
 
+
+
 <template>
-  <div>
-    <p v-if="displayName">Salut, {{ displayName }}!</p>
-    <p v-else>Nu ești logat sau nu există display name.</p>
-    <chat/>
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <slidebar />
+
+    <!-- Chat -->
+    <chat class="flex-1" />
   </div>
 </template>
