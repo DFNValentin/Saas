@@ -1,32 +1,43 @@
 <script setup>
-//import useFriends from '~/composables/useFriends'
+import useFriends from '~/composables/useFriends'
+
+import Modal from '../components/modal.vue'
+
+const showModal = ref(false)
+
+const openModal = () => showModal.value = true
+const closeModal = () => showModal.value = false
+
+const { sendRequest, acceptRequest, revokeRequest, getPendingRequest, getFriendList } = useFriends()
+
 
 definePageMeta({
   middleware: 'auth'
 })
 
-//const friends = ref([])
-//const pendingRequests = ref([])
+const friends = ref([])
+const pendingRequests = ref([])
 
-//const { getFriendsList, getPendingRequests, acceptRequest, declineRequest } = useFriends()
+// const { getFriendsList, getPendingRequests, acceptRequest, declineRequest } = useFriends()
 
-//onMounted(async () => {
-  //friends.value = await getFriendsList()
-  //pendingRequests.value = await getPendingRequests()
-//})
+onMounted(async () => {
+  friends.value = await getFriendsList()
+  pendingRequests.value = await getPendingRequests()
+
+})
 
 
 // Funcții pentru butoane
-//const handleAccept = async (id) => {
-  //await acceptRequest(id)
-  //pendingRequests.value = await getPendingRequests()
-  //friends.value = await getFriendsList()
-//}
+const handleAccept = async (id) => {
+  await acceptRequest(id)
+  pendingRequests.value = await getPendingRequests()
+  friends.value = await getFriendsList()
+}
 
-//const handleDecline = async (id) => {
- // await declineRequest(id)
-  //pendingRequests.value = await getPendingRequests()
-//}
+const handleDecline = async (id) => {
+  await declineRequest(id)
+  pendingRequests.value = await getPendingRequests()
+}
 </script>
 
 
@@ -49,11 +60,28 @@ definePageMeta({
         <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Online</button>
         <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Pending</button>
         <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Blocked</button>
-        <button class="px-3 py-2 text-left rounded bg-green-600 hover:bg-green-700 mt-2">
-          Add Friend
-        </button>
-      </nav>
+          <button 
+    @click="openModal"
+    class="px-3 py-2 text-left rounded bg-green-600 hover:bg-green-700 mt-2 text-white"
+  >
+    Add Friend
+  </button>
 
+  <Modal :show="showModal" @close="closeModal">
+    <input 
+      type="text" 
+      placeholder="Friend name"
+      class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm transition text-black"/>
+    <button 
+      @click="handleConfirm"
+      class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+    >
+      Confirm
+    </button>
+  </Modal>
+        
+
+      </nav>
       <!-- Friends List -->
       <div class="flex-1 overflow-y-auto p-2 space-y-2">
         <div v-for="f in friends" :key="f.id" 

@@ -1,6 +1,6 @@
 import { supabase } from '~/utils/supabase'
 
-export function useFriends  ()  { 
+export  default function useFriends  ()  { 
     const sendRequest = async (userId) => {
         const {data , error} = await supabase
         .from('friends')
@@ -46,4 +46,12 @@ export function useFriends  ()  {
         .or(`sent.eq.${supabase.auth.user().id},received.eq.${supabase.auth.user().id}`)
         .eq('accepted' , true) 
     }   
+
+      return {
+    sendRequest,
+    acceptRequest,
+    revokeRequest,
+    getPendingRequest,
+    getFriendList,
+  }
 }
