@@ -1,108 +1,130 @@
-<script setup>
-import useFriends from '~/composables/useFriends'
 
+<script setup>
+import { ref, onMounted } from 'vue'
+import useFriends from '~/composables/useFriends'
 import Modal from '../components/modal.vue'
 
 const showModal = ref(false)
+const openModal = () => (showModal.value = true)
+const closeModal = () => (showModal.value = false)
 
-const openModal = () => showModal.value = true
-const closeModal = () => showModal.value = false
+const {
+  sendRequest,
+  acceptRequest,
+  revokeRequest,
+  getPendingRequest,
+  getFriendsList
+} = useFriends()
 
-const { sendRequest, acceptRequest, revokeRequest, getPendingRequest, getFriendList } = useFriends()
-
-
-definePageMeta({
-  middleware: 'auth'
-})
+definePageMeta({ middleware: 'auth' })
 
 const friends = ref([])
 const pendingRequests = ref([])
-
-// const { getFriendsList, getPendingRequests, acceptRequest, declineRequest } = useFriends()
+const friendName = ref('')
+const loading = ref(false)
+const error = ref('')
 
 onMounted(async () => {
-  friends.value = await getFriendsList()
-  pendingRequests.value = await getPendingRequests()
-
+  friends.value = await getFriendsList() || []
+  pendingRequests.value = await getPendingRequest() || []
 })
 
+const handleSend = async () => {
+  error.value = ''
+  const name = friendName.value.trim()
+  if (!name) {
+    error.value = 'Te rog introdu un username.'
+    return
+  }
+  loading.value = true
+  try {
+    await sendRequest(name)
+    friendName.value = ''
+    closeModal()
+  } catch (e) {
+    error.value = e?.message || 'A apărut o problemă la trimiterea cererii.'
+  } finally {
+    loading.value = false
+  }
+}
 
-// Funcții pentru butoane
 const handleAccept = async (id) => {
   await acceptRequest(id)
-  pendingRequests.value = await getPendingRequests()
-  friends.value = await getFriendsList()
+  pendingRequests.value = await getPendingRequest() || []
+  friends.value = await getFriendsList() || []
 }
 
 const handleDecline = async (id) => {
-  await declineRequest(id)
-  pendingRequests.value = await getPendingRequests()
+  await revokeRequest(id)
+  pendingRequests.value = await getPendingRequest() || []
 }
 </script>
 
-
-
 <template>
   <div class="flex h-screen">
-    <!-- Sidebar servers -->
+    <!-- Sidebar -->
     <slidebar />
 
-    <!-- Friends panel -->
-    <aside class="w-60 bg-[#2b2d31] text-white flex flex-col">
-      <!-- Header -->
-      <div class="h-12 px-4 flex items-center border-b border-white/10 font-semibold">
-        Friends
-      </div>
 
-      <!-- Nav Tabs -->
-      <nav class="flex flex-col p-2 text-sm space-y-1">
-        <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">All</button>
-        <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Online</button>
-        <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Pending</button>
-        <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Blocked</button>
-          <button 
-    @click="openModal"
-    class="px-3 py-2 text-left rounded bg-green-600 hover:bg-green-700 mt-2 text-white"
-  >
-    Add Friend
-  </button>
+<!-- Friends panel -->
+<aside class="w-60 bg-[#2b2d31] text-white flex flex-col">
+  <div class="h-12 px-4 flex items-center border-b border-white/10 font-semibold">
+    Friends
+  </div>
 
-  <Modal :show="showModal" @close="closeModal">
-    <input 
-      type="text" 
-      placeholder="Friend name"
-      class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm transition text-black"/>
-    <button 
-      @click="handleConfirm"
-      class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+  <nav class="flex flex-col p-2 text-sm space-y-1">
+    <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">All</button>
+    <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Online</button>
+    <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Pending</button>
+    <button class="px-3 py-2 text-left rounded hover:bg-[#404249]">Blocked</button>
+
+    <button
+      @click="openModal"
+      class="px-3 py-2 text-left rounded bg-green-600 hover:bg-green-700 mt-2 text-white"
     >
-      Confirm
+      Add Friend
     </button>
-  </Modal>
-        
 
-      </nav>
-      <!-- Friends List -->
-      <div class="flex-1 overflow-y-auto p-2 space-y-2">
-        <div v-for="f in friends" :key="f.id" 
-             class="flex items-center gap-3 p-2 rounded hover:bg-[#404249] cursor-pointer">
-          <div class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center">
-            {{ f.initials }}
-          </div>
-          <span class="text-sm">{{ f.name }}</span>
-        </div>
-      </div>
-    </aside>
+    <Modal :show="showModal" @close="closeModal">
+      <input
+        v-model="friendName"
+        type="text"
+        placeholder="Friend name"
+        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm transition text-black"
+      />
+      <button
+        @click="handleSend"
+        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 mt-2"
+      >
+        Confirm
+      </button>
+      <p v-if="error" class="text-red-400 text-sm mt-2">{{ error }}</p>
+    </Modal>
+  </nav>
 
-    <!-- Main Chat area -->
-    <main class="flex-1 bg-[#313338] text-white flex flex-col">
-      <header class="h-12 border-b border-white/10 px-4 flex items-center">
-        <h2 class="font-semibold">Select a friend to chat</h2>
-      </header>
-      <div class="flex-1 flex items-center justify-center text-white/40">
-        👈 Alege un prieten din lista
+  <div class="flex-1 overflow-y-auto p-2 space-y-2">
+    <div
+      v-for="f in friends"
+      :key="f.id"
+      class="flex items-center gap-3 p-2 rounded hover:bg-[#404249] cursor-pointer"
+    >
+      <div class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center">
+        {{ f.initials }}
       </div>
-    </main>
+      <span class="text-sm">{{ f.name }}</span>
+    </div>
+  </div>
+</aside>
+
+<main class="flex-1 bg-[#313338] text-white flex flex-col">
+  <header class="h-12 border-b border-white/10 px-4 flex items-center">
+    <h2 class="font-semibold">Select a friend to chat</h2>
+  </header>
+  <div class="flex-1 flex items-center justify-center text-white/40">
+    👈 Alege un prieten din lista
+  </div>
+</main>
+
+
   </div>
 </template>
-

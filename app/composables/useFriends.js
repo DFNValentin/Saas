@@ -1,57 +1,77 @@
 import { supabase } from '~/utils/supabase'
 
-export  default function useFriends  ()  { 
-    const sendRequest = async (userId) => {
-        const {data , error} = await supabase
-        .from('friends')
-        .insert([{sent: supabase.auth.user().id, received: userId}])
-        if (error) throw error
-        return data
-    }
+export default function useFriends() {
+  const sendRequest = async (userId) => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+    if (!user) throw new Error('Nu ești logat.')
 
-    const acceptRequest = async (friendId) => {
-        const {data ,  error} = await supabase
-        .from('friends')
-        .update({accepted: true})
-        .eq('id' , friendId)
-        if (error) throw error
-        return data
-    }
+    const { data, error } = await supabase
+      .from('Friends') // numele corect al tablei
+      .insert([{ sent: user.id, received: userId, status: false }])
+    if (error) throw error
+    return data
+  }
 
-    const revokeRequest = async (friendId) => {
-        const {data ,  error} = await supabase
-        .from('friends')
-        .delete()
-        .eq('id' , friendId)
-        if (error) throw error
-        return data
-    }
+  const acceptRequest = async (friendId) => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+    if (!user) throw new Error('Nu ești logat.')
 
-    const getPendingRequest = async () => { 
-        const {data , error} = await supabase
-        .from('friends')
-        .select('*')
-        .eq('received', supabase.auth.user().id)
-        .eq('accepted', false)
-        if (error) throw error
-        return data
-    }
+    const { data, error } = await supabase
+      .from('Friends')
+      .update({ accepted: true })
+      .eq('id', friendId)
+    if (error) throw error
+    return data
+  }
 
-    const getFriendList = async () => { 
-        const {data , error} = await supabase  
-        .from('friends')
-        .select('*')
-        //include rândurile în 
-        // care utilizatorul este fie cel care a trimis cererea, fie cel care a primit-o.
-        .or(`sent.eq.${supabase.auth.user().id},received.eq.${supabase.auth.user().id}`)
-        .eq('accepted' , true) 
-    }   
+  const revokeRequest = async (friendId) => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+    if (!user) throw new Error('Nu ești logat.')
 
-      return {
+    const { data, error } = await supabase
+      .from('Friends')
+      .delete()
+      .eq('id', friendId)
+    if (error) throw error
+    return data
+  }
+
+  const getPendingRequest = async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+    if (!user) return []
+
+    const { data, error } = await supabase
+      .from('Friends')
+      .select('*')
+      .eq('received', user.id)
+      .eq('accepted', false)
+    if (error) throw error
+    return data
+  }
+
+  const getFriendsList = async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+    if (!user) return []
+
+    const { data, error } = await supabase
+      .from('Friends')
+      .select('*')
+      .or(`sent.eq.${user.id},received.eq.${user.id}`)
+      .eq('accepted', true)
+    if (error) throw error
+    return data
+  }
+
+  return {
     sendRequest,
     acceptRequest,
     revokeRequest,
     getPendingRequest,
-    getFriendList,
+    getFriendsList
   }
 }

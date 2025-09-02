@@ -11,7 +11,7 @@ const fetchMessages = async () => {
   .from("messages")
   .select("*")
   .order("created_at", { ascending: false })
-  
+
   if (error) console.error(error)
   else messages.value = data
 }
@@ -47,7 +47,7 @@ const message_display = () => {
         class="flex-1 rounded-lg bg-[#1e1f22] p-3 text-white outline-none placeholder-gray-400"
       />
       <button
-        @click="sendMessage"
+        @click="sendMessage()"
         class="ml-3 bg-[#5865F2] hover:bg-[#4752c4] px-4 py-2 rounded-lg transition-colors"
       >
         Trimite

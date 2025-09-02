@@ -21,7 +21,7 @@
     <form @submit.prevent="login" 
       class="relative bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8 w-full max-w-md space-y-6 backdrop-blur-md bg-opacity-80 dark:bg-opacity-80"
     >
-      <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">Register</h2>
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center">Login</h2>
 
       <div>
         <label class="block text-gray-700 dark:text-gray-200 mb-2">Email</label>
@@ -40,9 +40,9 @@
       <button type="submit"
         class="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
       >
-        login
+        LOGIN
       </button>
-
+      <button @click="goTo('/register')">Register</button>
       <p v-if="error" class="text-red-500 text-center mt-2">{{ error }}</p>
     </form>
   </div>
@@ -57,6 +57,9 @@ const email = ref('')
 const password = ref('')
 const error = ref(null)
 
+function goTo(path) {
+  router.push(path)
+}
 
 const login = async () => {
   error.value = null

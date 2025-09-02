@@ -56,7 +56,7 @@
       >
         Register
       </button>
-
+      <button @click="goTo('/login')">Already have an account? LogIn</button>
       <p v-if="error" class="text-red-500 text-center mt-2">{{ error }}</p>
     </form>
   </div>
@@ -65,6 +65,14 @@
 
 <script setup>
 import { supabase } from '~/utils/supabase'
+import {useRouter} from 'vue-router'
+
+const router = useRouter()
+
+function goTo(path)  { 
+  router.push(path)
+}
+
 
 const name = ref('')
 const email = ref('')
