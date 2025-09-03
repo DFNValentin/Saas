@@ -1,13 +1,13 @@
 import { supabase } from '~/utils/supabase'
 
 export default function useFriends() {
-  // 📌 Trimitere cerere prietenie
+  //  Trimitere cerere prietenie
   const sendRequest = async (username) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
     if (!user) throw new Error('Nu ești logat.')
 
-    // 🔍 Căutăm utilizatorul după username
+    //  Căutăm utilizatorul după username
     const { data: targetUser, error: findError } = await supabase
       .from('Profile')            // tabela ta de users (ai username acolo)
       .select('id')
@@ -26,7 +26,6 @@ export default function useFriends() {
     return data
   }
 
-  // 📌 Acceptare cerere
   const acceptRequest = async (friendId) => {
     const { data, error } = await supabase
       .from('Friends')
@@ -37,7 +36,6 @@ export default function useFriends() {
     return data
   }
 
-  // 📌 Ștergere / Revocare cerere
   const revokeRequest = async (friendId) => {
     const { data, error } = await supabase
       .from('Friends')
@@ -48,7 +46,6 @@ export default function useFriends() {
     return data
   }
 
-  // 📌 Cereri în așteptare
   const getPendingRequests = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
@@ -64,7 +61,6 @@ export default function useFriends() {
     return data
   }
 
-  // 📌 Lista prieteni
   const getFriendsList = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
@@ -80,11 +76,20 @@ export default function useFriends() {
     return data
   }
 
+  const deleteFriend = async (friendId) => {
+    const {data , error} = await supabase
+    .from('Friends')
+    .delete()
+    .eq('id', friendId)
+    if (error) throw error
+    return await getFriendsList()
+  }
   return {
     sendRequest,
     acceptRequest,
     revokeRequest,
     getPendingRequests,
-    getFriendsList
+    getFriendsList,
+    deleteFriend
   }
 }

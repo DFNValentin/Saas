@@ -13,7 +13,8 @@ const {
   acceptRequest,
   revokeRequest,
   getPendingRequests,
-  getFriendsList
+  getFriendsList,
+  deleteFriend
 } = useFriends()
 
 definePageMeta({ middleware: 'auth' })
@@ -25,6 +26,7 @@ const friendName = ref('')
 const loading = ref(false)
 const error = ref('')
 const userId = ref(null)
+const deleteRequests = ref('')
 
 // Load friends and pending requests on mount
 onMounted(async () => {
@@ -85,6 +87,15 @@ const handleDecline = async (id) => {
   await revokeRequest(id)
   pendingRequests.value = await getPendingRequests() || []
 }
+
+const handleDelete = async (id) => {
+  try {
+    await deleteFriend(id)
+    friends.value = await getFriendsList() || []
+  } catch (e) {
+    console.error('Eroare la ștergere:', e.message)
+  }
+}
 </script>
 
 <template>
@@ -137,6 +148,7 @@ const handleDecline = async (id) => {
             {{ (f.name || f.username || (f.sent === userId ? f.received : f.sent) || '').slice(0,2).toUpperCase() }}
           </div>
           <span>{{ f.name || f.username || (f.sent === userId ? f.received : f.sent) }}</span>
+          <button class="px-2 py-1 bg-red-600 rounded hover:bg-red-700" @click="handleDelete(f.id)">Delete</button>
         </div>
       </div>
     </main>
