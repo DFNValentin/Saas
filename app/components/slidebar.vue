@@ -3,7 +3,17 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const displayName = ref('')
 
+onMounted(async () => {
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (!error && user) {
+    // vezi exact ce cheie are user_metadata
+    console.log(user) // debug să vezi structura completă
+    displayName.value = user.user_metadata.full_name || user.user_metadata.display_name || ''
+  }
+})
 const servers = [
   { id: '1', name: 'Frontend Guild' },
   { id: '2', name: 'Vue Land' },
@@ -67,7 +77,7 @@ function onProfile() { console.log('Profile clicked') }
 
       <!-- Profile -->
       <button @click="onProfile" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5865F2] to-[#3ba55d] text-xs font-bold flex items-center justify-center">
-        {{ userInitials }}
+        {{ displayName }}
       </button>
     </aside>
 

@@ -64,31 +64,39 @@
 
 
 <script setup>
+import { ref } from 'vue'
 import { supabase } from '~/utils/supabase'
-import {useRouter} from 'vue-router'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-function goTo(path)  { 
+function goTo(path) {
   router.push(path)
 }
-
 
 const name = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const error = ref(null)
+
 const register = async () => {
   error.value = null
-  const { data, error: signUpError } = await supabase.auth.signUp({
-    name: name.value,
+
+  if (password.value !== passwordConfirm.value) {
+    error.value = 'Parolele nu coincid.'
+    return
+  }
+
+  // 1️⃣ Crează utilizatorul în auth
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: email.value,
     password: password.value,
-    passwordConfirm: passwordConfirm.value,
     options: {
-    data: { display_name: name.value } // aici pui numele
-  }
+      data: {
+        display_name: name.value
+      }
+    }
   })
 
   if (signUpError) {
@@ -96,11 +104,29 @@ const register = async () => {
     return
   }
 
-
-  if (updateError) {
-    errorMsg.value = updateError.message
+  const user = signUpData.user
+  if (!user) {
+    error.value = 'Nu s-a putut crea utilizatorul.'
     return
   }
-  console.log('User registered:', data)
+
+  // 2️⃣ Creează rândul în tabela profiles
+  const { data: profileData, error: profileError } = await supabase
+    .from('Profile')
+    .insert([{
+      id: user.id,               // folosim UUID-ul generat în auth
+      username: name.value,
+    //  display_name: name.value
+    }])
+
+  if (profileError) {
+    error.value = profileError.message
+    return
+  }
+
+  console.log('User registered and profile created:', profileData)
+
+  // 3️⃣ Redirect după succes
+  router.push('/login')
 }
 </script>

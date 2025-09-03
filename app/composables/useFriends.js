@@ -1,45 +1,55 @@
 import { supabase } from '~/utils/supabase'
 
 export default function useFriends() {
-  const sendRequest = async (userId) => {
+  // 📌 Trimitere cerere prietenie
+  const sendRequest = async (username) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
     if (!user) throw new Error('Nu ești logat.')
 
-    const { data, error } = await supabase
-      .from('Friends') // numele corect al tablei
-      .insert([{ sent: user.id, received: userId, status: false }])
-    if (error) throw error
-    return data
-  }
+    // 🔍 Căutăm utilizatorul după username
+    const { data: targetUser, error: findError } = await supabase
+      .from('Profile')            // tabela ta de users (ai username acolo)
+      .select('id')
+      .eq('username', username) // username vine din input
+      .single()
 
-  const acceptRequest = async (friendId) => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError) throw userError
-    if (!user) throw new Error('Nu ești logat.')
+    if (findError) throw findError
+    if (!targetUser) throw new Error('Utilizatorul nu există.')
 
+    // ✅ Inserăm prietenia cu UUID-uri
     const { data, error } = await supabase
       .from('Friends')
-      .update({ accepted: true })
-      .eq('id', friendId)
+      .insert([{ sent: user.id, received: targetUser.id, status: 'pending' }])
+
     if (error) throw error
     return data
   }
 
-  const revokeRequest = async (friendId) => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError) throw userError
-    if (!user) throw new Error('Nu ești logat.')
+  // 📌 Acceptare cerere
+  const acceptRequest = async (friendId) => {
+    const { data, error } = await supabase
+      .from('Friends')
+      .update({ status: 'accepted' })
+      .eq('id', friendId)
 
+    if (error) throw error
+    return data
+  }
+
+  // 📌 Ștergere / Revocare cerere
+  const revokeRequest = async (friendId) => {
     const { data, error } = await supabase
       .from('Friends')
       .delete()
       .eq('id', friendId)
+
     if (error) throw error
     return data
   }
 
-  const getPendingRequest = async () => {
+  // 📌 Cereri în așteptare
+  const getPendingRequests = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
     if (!user) return []
@@ -48,11 +58,13 @@ export default function useFriends() {
       .from('Friends')
       .select('*')
       .eq('received', user.id)
-      .eq('accepted', false)
+      .eq('status', 'pending')
+    
     if (error) throw error
     return data
   }
 
+  // 📌 Lista prieteni
   const getFriendsList = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
@@ -62,7 +74,8 @@ export default function useFriends() {
       .from('Friends')
       .select('*')
       .or(`sent.eq.${user.id},received.eq.${user.id}`)
-      .eq('accepted', true)
+      .eq('status', 'accepted')
+
     if (error) throw error
     return data
   }
@@ -71,7 +84,7 @@ export default function useFriends() {
     sendRequest,
     acceptRequest,
     revokeRequest,
-    getPendingRequest,
+    getPendingRequests,
     getFriendsList
   }
 }
