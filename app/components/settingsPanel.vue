@@ -28,6 +28,11 @@
         @click="activeTab='privacy'">
         🛡️ Privacy
       </button>
+            <button 
+        class="flex items-center gap-2 p-2 rounded bg-red-600 rounded hover:bg-red-700"" 
+        @click="activeTab='privacy'">
+        Log Out
+      </button>
     </nav>
   </aside>
 </template>

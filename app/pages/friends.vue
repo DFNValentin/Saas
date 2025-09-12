@@ -96,6 +96,16 @@ const handleDelete = async (id) => {
     console.error('Eroare la ștergere:', e.message)
   }
 }
+
+
+const { data: { user } } = await supabase.auth.getUser()
+const loggedInUserId = user.username
+
+
+const getFriendName = (f) => {
+  return f.sent === user.id ? f.received_username : f.sender_username
+}
+
 </script>
 
 <template>
@@ -123,19 +133,29 @@ const handleDelete = async (id) => {
           <button @click="handleSend" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 mt-2">Confirm</button>
           <p v-if="error" class="text-red-400 text-sm mt-2">{{ error }}</p>
         </Modal>
+        <div>
+          <h2>Direct Messages</h2>
+        </div>
       </nav>
     </aside>
 
     <!-- Main content -->
     <main class="flex-1 bg-[#313338] text-white p-4 overflow-y-auto">
       <!-- Pending Requests -->
-      <div v-if="activeTab==='pending'">
+      <div v-if="activeTab==='pending' ">
         <h2 class="font-semibold mb-2">Pending Requests</h2>
         <div v-for="f in displayedList" :key="f.id" class="flex items-center justify-between p-2 rounded hover:bg-[#404249]">
-          <span>{{ f.name || f.username || f.sent }}</span>
+          <span>{{ getFriendName(f)}}</span>
           <div class="flex gap-2">
-            <button @click="handleAccept(f.id)" class="px-2 py-1 bg-green-600 rounded hover:bg-green-700">Accept</button>
-            <button @click="handleDecline(f.id)" class="px-2 py-1 bg-red-600 rounded hover:bg-red-700">Decline</button>
+            <!-- Dacă user-ul logat este destinatatar -->
+    <template v-if="f.received === user.id">
+      <button @click="handleAccept(f.id)" class="px-2 py-1 bg-green-600 rounded hover:bg-green-700">Accept</button>
+      <button @click="handleDecline(f.id)" class="px-2 py-1 bg-red-600 rounded hover:bg-red-700">Decline</button>
+    </template>
+    <!-- Dacă user-ul logat este sender -->
+    <template v-else-if="f.sent === user.id">
+      <button @click="handleDecline(f.id)" class="px-2 py-1 bg-red-600 rounded hover:bg-red-700">Cancel</button>
+    </template>
           </div>
         </div>
       </div>
@@ -147,7 +167,7 @@ const handleDelete = async (id) => {
           <div class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-sm font-semibold">
             {{ (f.name || f.username || (f.sent === userId ? f.received : f.sent) || '').slice(0,2).toUpperCase() }}
           </div>
-          <span>{{ f.name || f.username || (f.sent === userId ? f.received : f.sent) }}</span>
+          <span>{{getFriendName(f) }}</span>
           <button class="px-2 py-1 bg-red-600 rounded hover:bg-red-700" @click="handleDelete(f.id)">Delete</button>
         </div>
       </div>

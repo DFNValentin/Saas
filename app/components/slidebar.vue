@@ -76,7 +76,7 @@ function onProfile() { console.log('Profile clicked') }
       <Separator />
 
       <!-- Profile -->
-      <button @click="onProfile" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5865F2] to-[#3ba55d] text-xs font-bold flex items-center justify-center">
+      <button @click="goTo('/settings')" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5865F2] to-[#3ba55d] text-xs font-bold flex items-center justify-center">
         {{ displayName }}
       </button>
     </aside>

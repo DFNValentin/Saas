@@ -5,25 +5,49 @@ export default function useFriends() {
   const sendRequest = async (username) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
-    if (!user) throw new Error('Nu ești logat.')
+    if (!user) throw new Error('You are not logged.')
 
     //  Căutăm utilizatorul după username
-    const { data: targetUser, error: findError } = await supabase
-      .from('Profile')            // tabela ta de users (ai username acolo)
-      .select('id')
-      .eq('username', username) // username vine din input
-      .single()
+const { data: senderProfile, error: senderError } = await supabase
+    .from('Profile')
+    .select('id, username')
+    .eq('id', user.id)
+    .single()
 
-    if (findError) throw findError
-    if (!targetUser) throw new Error('Utilizatorul nu există.')
+  if (senderError) throw senderError
 
-    // ✅ Inserăm prietenia cu UUID-uri
-    const { data, error } = await supabase
-      .from('Friends')
-      .insert([{ sent: user.id, received: targetUser.id, status: 'pending' }])
+  // 📌 Profilul destinatarului (target)
+  const { data: targetUser, error: findError } = await supabase
+    .from('Profile')
+    .select('id, username')
+    .eq('username', username)
+    .single()
 
-    if (error) throw error
-    return data
+  if (findError) throw findError
+  if (!targetUser) throw new Error("Username doesn't exist.")
+  if (targetUser.id == user.id) throw new Error("You can't send a friend request to your account.")
+
+const { data: existing, error: existingError } = await supabase
+  .from('Friends')
+  .select('*')
+  .or(
+    `and(sent.eq.${user.id},received.eq.${targetUser.id}),and(sent.eq.${targetUser.id},received.eq.${user.id})`
+  )
+  .single()
+
+if (existing) {
+  throw new Error("Friend request already sent or you are already friends.")
+}
+  // ✅ Inserăm prietenia
+  const { data, error } = await supabase
+    .from('Friends')
+    .insert([{
+      sent: senderProfile.id,
+      received: targetUser.id,
+      status: 'pending',
+      sender_username: senderProfile.username,
+      received_username: targetUser.username
+    }])
   }
 
   const acceptRequest = async (friendId) => {
@@ -54,7 +78,8 @@ export default function useFriends() {
     const { data, error } = await supabase
       .from('Friends')
       .select('*')
-      .eq('received', user.id)
+     // .eq('received , sent', user.id)
+      .or(`sent.eq.${user.id},received.eq.${user.id}`)
       .eq('status', 'pending')
     
     if (error) throw error
