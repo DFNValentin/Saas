@@ -1,10 +1,14 @@
 <script setup>
 definePageMeta({
   middleware: 'auth'
+
+
 })
 import { ref, onMounted } from 'vue'
 import { supabase } from '~/utils/supabase'
 import { useRouter } from 'vue-router'
+import { useAuth } from '~/composables/useAuth'
+const { currentUser, loading } = useAuth()
 const router = useRouter()
 //const displayName = ref('')
 

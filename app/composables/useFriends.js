@@ -23,7 +23,7 @@ const { data: senderProfile, error: senderError } = await supabase
     .eq('username', username)
     .single()
 
-  if (findError) throw findError
+  //if (findError) throw findError
   if (!targetUser) throw new Error("Username doesn't exist.")
   if (targetUser.id == user.id) throw new Error("You can't send a friend request to your account.")
 
@@ -48,6 +48,8 @@ if (existing) {
       sender_username: senderProfile.username,
       received_username: targetUser.username
     }])
+    if (error) throw error
+    return data
   }
 
   const acceptRequest = async (friendId) => {

@@ -88,7 +88,7 @@ const register = async () => {
     return
   }
 
-  // 1️⃣ Crează utilizatorul în auth
+  //  Crează utilizatorul în auth
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: email.value,
     password: password.value,
@@ -110,7 +110,7 @@ const register = async () => {
     return
   }
 
-  // 2️⃣ Creează rândul în tabela profiles
+  //  tabela profiles
   const { data: profileData, error: profileError } = await supabase
     .from('Profile')
     .insert([{
