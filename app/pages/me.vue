@@ -28,9 +28,11 @@ const router = useRouter()
 <template>
   <div class="flex h-screen">
     <!-- Sidebar -->
-    <slidebar />
+     <client-only>
+          <slidebar />
+     </client-only>
 
-    <!-- Chat -->
+    <!-- Chat  <chat class="flex-1" />-->
     <chat class="flex-1" />
    <!--{{ displayName }}--> 
   </div>

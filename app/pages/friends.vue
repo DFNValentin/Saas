@@ -3,7 +3,10 @@ import { ref, computed, onMounted } from 'vue'
 import useFriends from '~/composables/useFriends'
 import Modal from '../components/modal.vue'
 import Slidebar from '../components/slidebar.vue'
+import { useRouter } from 'vue-router';
 
+
+const router = useRouter()
 const showModal = ref(false)
 const openModal = () => (showModal.value = true)
 const closeModal = () => (showModal.value = false)
@@ -30,21 +33,26 @@ const deleteRequests = ref('')
 
 // Load friends and pending requests on mount
 onMounted(async () => {
-  try {
-    const friendsData = await getFriendsList() || []
-    const pendingData = await getPendingRequests() || []
+  const friendsData = await getFriendsList() || []
+  const pendingData = await getPendingRequests() || []
 
-    friends.value = friendsData
-    pendingRequests.value = pendingData
+  // map friendUuid / friendUsername
+  friends.value = friendsData.map(f => ({
+    ...f,
+    friendUuid: f.sent === user.id ? f.received : f.sent,
+    friendUsername: f.sent === user.id ? f.received_username : f.sender_username
+  }))
 
-    // Set current userId (assuming getFriendsList returns user info)
-    if (friendsData.length > 0) {
-      userId.value = friendsData[0].currentUserId || null
-    }
-  } catch (e) {
-    console.error(e)
-  }
+  pendingRequests.value = pendingData.map(f => ({
+    ...f,
+    friendUuid: f.sent === user.id ? f.received : f.sent,
+    friendUsername: f.sent === user.id ? f.received_username : f.sender_username
+  }))
 })
+const goToDM = (friendId) => {
+  console.log('Navigating to DM with:', friendId)
+  router.push(`/me/dm/${friendId}`)
+}
 
 // Compute which list to display based on active tab
 const displayedList = computed(() => {
@@ -133,9 +141,37 @@ const getFriendName = (f) => {
           <button @click="handleSend" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 mt-2">Confirm</button>
           <p v-if="error" class="text-red-400 text-sm mt-2">{{ error }}</p>
         </Modal>
-        <div>
-          <h2>Direct Messages</h2>
+<div class="mt-4">
+  <h2 class="text-sm font-semibold px-3 mb-2">Direct Messages</h2>
+
+  <ul class="flex flex-col space-y-1">
+<li
+v-for="f in displayedList"
+:key="f.id"
+class="px-3 py-2 rounded hover:bg-[#404249] cursor-pointer flex items-center justify-between"
+@click="goToDM(f.friendUuid)"
+>
+      <div class="flex items-center gap-2">
+        <!-- Avatar: primele 2 litere din nume -->
+        <div
+          class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-sm font-semibold"
+        >
+          {{ (getFriendName(f) || '').slice(0,2).toUpperCase() }}
         </div>
+
+        <!-- Nume prieten -->
+        <span>{{ getFriendName(f) }}</span>
+      </div>
+
+      <!-- Status online -->
+      <span
+        v-if="f.status === 'online'"
+        class="w-2 h-2 rounded-full bg-green-500"
+        title="Online"
+      ></span>
+    </li>
+  </ul>
+</div>
       </nav>
     </aside>
 

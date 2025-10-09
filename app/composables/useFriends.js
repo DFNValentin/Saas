@@ -1,13 +1,12 @@
 import { supabase } from '~/utils/supabase'
 
 export default function useFriends() {
-  //  Trimitere cerere prietenie
+
   const sendRequest = async (username) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
     if (!user) throw new Error('You are not logged.')
 
-    //  Căutăm utilizatorul după username
 const { data: senderProfile, error: senderError } = await supabase
     .from('Profile')
     .select('id, username')
@@ -16,12 +15,12 @@ const { data: senderProfile, error: senderError } = await supabase
 
   if (senderError) throw senderError
 
-  // 📌 Profilul destinatarului (target)
+  
   const { data: targetUser, error: findError } = await supabase
     .from('Profile')
     .select('id, username')
     .eq('username', username)
-    .single()
+    .maybeSingle()
 
   //if (findError) throw findError
   if (!targetUser) throw new Error("Username doesn't exist.")
@@ -38,7 +37,7 @@ const { data: existing, error: existingError } = await supabase
 if (existing) {
   throw new Error("Friend request already sent or you are already friends.")
 }
-  // ✅ Inserăm prietenia
+  // Insert Friends
   const { data, error } = await supabase
     .from('Friends')
     .insert([{
