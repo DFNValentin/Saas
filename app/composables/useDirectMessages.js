@@ -6,13 +6,21 @@ export default function useDirectMessages() {
   const newMessage = ref('')
 
   const sendMessage = async (targetUserId) => {
-    // Verify If User Is Logged
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError) throw userError
-    if (!user) throw new Error('You are not logged in.')
-    if (!newMessage.value.trim()) return
+    console.log(' sendMessage called with targetUserId =', targetUserId)
 
-    // Sender User Profile
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) {
+      console.error(' supabase.auth.getUser() error:', userError)
+      return
+    }
+    if (!user) {
+      console.error(' No logged in user')
+      return
+    }
+
+    console.log(' Current user ID =', user.id)
+
+    // Fetch sender profile
     const { data: senderProfile, error: senderError } = await supabase
       .from('Profile')
       .select('id, username')
@@ -20,11 +28,12 @@ export default function useDirectMessages() {
       .single()
 
     if (senderError || !senderProfile) {
-      console.error('❌ Sender profile fetch error:', senderError)
+      console.error(' Sender profile fetch error:', senderError)
       return
     }
 
-    // Target User Profile
+    // Fetch receiver profile
+    console.log(' Fetching receiver profile for ID =', targetUserId)
     const { data: receiverProfile, error: receiverError } = await supabase
       .from('Profile')
       .select('id, username')
@@ -32,12 +41,12 @@ export default function useDirectMessages() {
       .single()
 
     if (receiverError || !receiverProfile) {
-      console.error('❌ Receiver profile fetch error:', receiverError)
+      console.error(' Receiver profile fetch error:', receiverError)
       console.log('Receiver ID used:', targetUserId)
       return
     }
 
-    // Create Message Obj
+    console.log(' Receiver profile found:', receiverProfile)
 
     const messageObj = {
       send: senderProfile.id,
@@ -49,43 +58,46 @@ export default function useDirectMessages() {
       created_at: new Date().toISOString(),
     }
 
-    console.log('💬 Sending message from', senderProfile.id, 'to', receiverProfile.id)
+    console.log(' Sending message:', messageObj)
 
-    // Insert in Database
     const { data, error } = await supabase
       .from('Messages')
       .insert([messageObj])
       .select()
 
     if (error) {
-      console.error('❌ Insert message error:', error)
+      console.error(' Insert message error:', error)
       return
     }
 
-    // Add local Message
     messages.value.push(data[0])
     newMessage.value = ''
   }
 
   const fetchMessages = async (currentUserId, targetUserId) => {
-  if (!currentUserId || !targetUserId) return
+    console.log(' fetchMessages called with:', { currentUserId, targetUserId })
 
-  const { data, error } = await supabase
-    .from('Messages')
-    .select('*')
-    .or(
-      `send.eq.${currentUserId}.and.received.eq.${targetUserId}),` +
-      `send.eq.${targetUserId}.and.received_id.eq.${currentUserId}`
-    )
-    .order('created_at', { ascending: true })
+    if (!currentUserId || !targetUserId) {
+      console.warn(' Missing IDs in fetchMessages:', { currentUserId, targetUserId })
+      return
+    }
 
-  if (error) {
-    console.error('Fetch messages error:', error)
-    return
+    const { data, error } = await supabase
+      .from('Messages')
+      .select('*')
+      .or(
+        `send.eq.${currentUserId}.and.received.eq.${targetUserId},send.eq.${targetUserId}.and.received.eq.${currentUserId}`
+      )
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('❌ Fetch messages error:', error)
+      return
+    }
+
+    console.log(' Messages fetched:', data)
+    messages.value = data || []
   }
 
-  messages.value = data || []
-}
-
-  return { messages, newMessage, sendMessage , fetchMessages}
+  return { messages, newMessage, sendMessage, fetchMessages }
 }
