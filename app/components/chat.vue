@@ -1,3 +1,45 @@
+<script setup>
+import { ref, watch } from 'vue'
+import useDirectMessages from '~/composables/useDirectMessages'
+
+const props = defineProps({
+  currentUserId: { type: String, required: true },
+  targetUserId: { type: String, required: true }
+})
+
+const { messages, newMessage, sendMessage, fetchMessages } = useDirectMessages()
+
+const currentId = ref(null)
+const targetId = ref(null)
+watch(
+  () => [props.currentUserId, props.targetUserId],
+  ([newCurrent, newTarget]) => {
+    console.log(' Watching props change:', { newCurrent, newTarget })
+
+    currentId.value = newCurrent
+    targetId.value = newTarget
+
+    if (currentId.value && targetId.value) {
+      console.log(' Props ready, fetching messages for:', currentId.value, targetId.value)
+      fetchMessages(currentId.value, targetId.value)
+    }
+  },
+  { immediate: true, deep: true }
+)
+
+const handleSend = () => {
+  console.log(' handleSend called — currentId:', currentId.value, 'targetId:', targetId.value)
+
+  if (!newMessage.value.trim()) return
+  if (!targetId.value) {
+    console.error(' handleSend: targetUserId is undefined! props.targetUserId =', props.targetUserId)
+    return
+  }
+
+  sendMessage(targetId.value)
+}
+</script>
+
 <template>
   <div class="flex flex-col h-full bg-gray-800 text-white">
     <header class="p-4 bg-gray-900 font-semibold">
@@ -11,7 +53,7 @@
         :class="msg.send === currentId ? 'self-end bg-blue-600 text-white' : 'self-start bg-gray-700 text-white'"
         class="p-2 rounded max-w-[70%] break-words"
       >
-        <div class="text-xs opacity-70">{{ msg.sender_username }}</div>
+        <div class="text-xs opacity-70 mb-1">{{ msg.sender_username }}</div>
         <div>{{ msg.content }}</div>
       </div>
     </div>
@@ -27,47 +69,6 @@
     </footer>
   </div>
 </template>
-
-<script setup>
-import { ref, watch } from 'vue'
-import useDirectMessages from '~/composables/useDirectMessages'
-
-
-const props = defineProps({
-currentUserId: String,
-targetUserId: String
-})
-
-
-const { messages, newMessage, sendMessage, fetchMessages } = useDirectMessages()
-
-
-const currentId = ref(null)
-const targetId = ref(null)
-
-
-watch(
-  () => [props.currentUserId, props.targetUserId],
-  ([newCurrent, newTarget]) => {
-    console.log('Props updated:', { newCurrent, newTarget })
-    if (!newCurrent || !newTarget) return
-    currentId.value = newCurrent
-    targetId.value = newTarget
-    fetchMessages(currentId.value, targetId.value)
-  },
-  { immediate: true }
-)
-
-
-const handleSend = () => {
-  if (!newMessage.value.trim()) return
-  if (!targetId.value) {
-    alert("Chat not ready yet — please wait a second!")
-    return
-  }
-  sendMessage(targetId.value)
-}
-</script>
 
 <style scoped>
 .self-end { align-self: flex-end; }
